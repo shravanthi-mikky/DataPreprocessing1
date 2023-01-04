@@ -9,7 +9,7 @@ namespace DataPreProcessingOne
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            int sumOfAge = 0, sumOfSalary = 0,meanOfSalary, meanOfAge, salaryValue;
+            float sumOfAge = 0, sumOfSalary = 0,meanOfSalary, meanOfAge, salaryValue;
 
             var context = new MLContext();
 
@@ -60,6 +60,7 @@ namespace DataPreProcessingOne
                 {
                     foreach (var col in row.Values)
                     {
+                        Console.WriteLine(col +" \t" + col.GetType());
                         salaryValue = Convert.ToInt32(col);
                         //Calculating the sum of all values in slaary column
                         sumOfSalary += salaryValue;
@@ -72,14 +73,32 @@ namespace DataPreProcessingOne
             Console.WriteLine("Sum of Salary : {0} \t Mean Of Salary : {1} \nSum of Age : {2} \t Mean Of Age : {3}",sumOfSalary, meanOfSalary,sumOfAge,meanOfAge);
             Console.WriteLine("\nCount: {0}\n", preview.RowView.Length);
             //Filling the missing values with mean value
-           /* foreach (var row in preview.ColumnView)
+            foreach (var row in preview.ColumnView)
             {
                 string ColumnName = row.Column.Name.ToString();
                 if (ColumnName == "Age")
                 {
-                    foreach (var col in row.Values)
+                    /*foreach (var col in row.Values)
                     {
-                        col = meanOfAge;
+
+                        if(col.Equals(Convert.ToSingle(0)))
+                        {
+                            Console.WriteLine("*********************");
+                            Console.WriteLine(col);
+                            //col.Equals(Convert.ToSingle(meanOfAge));
+                            //Convert.ToInt32(col) = meanOfAge;
+                            Console.WriteLine("*********************");
+                            Console.WriteLine(col);
+                        }
+                    }*/
+                    for(int i=0;i< preview.RowView.Length; i++)
+                    {
+                        if (row.Values[i].Equals(Convert.ToSingle(0)))
+                        {
+                            Console.WriteLine(row.Values[i]);
+                            row.Values[i] = meanOfAge;
+                            Console.WriteLine(row.Values[i]);
+                        }
                     }
                 }
                 if (ColumnName == "Salary")
@@ -91,9 +110,21 @@ namespace DataPreProcessingOne
                         sumOfSalary += salaryValue;
                     }
                 }
-            }*/
-
-
+            }
+            Console.WriteLine("#####################");
+            //Column view
+            foreach (var row in preview.RowView)
+            {
+                Console.WriteLine();
+                foreach (var col in row.Values)
+                {
+                    if (col.Key == "Features")
+                    {
+                        continue;
+                    }
+                    Console.Write($"{col.Value}\t");
+                }
+            }
 
 
             //IDataView filteredData = context.Data.FilterRowsByColumn(data, "Age", lowerBound: 26, upperBound: 51);
