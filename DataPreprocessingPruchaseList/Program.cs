@@ -255,6 +255,7 @@ namespace DataPreprocessingPruchaseList
             File.WriteAllLines("C:/Users/Admin/Desktop/WebPractice/MachineLearning/DataPreprocessing1/DataPreprocessingPruchaseList/data_preprocessing.csv", lines3);
 
             List<CountryData2> EncodedList = new List<CountryData2>();
+
             var lines4 = System.IO.File.ReadAllLines("C:/Users/Admin/Desktop/WebPractice/MachineLearning/DataPreprocessing1/DataPreprocessingPruchaseList/data_preprocessing.csv").Skip(1).TakeWhile(t => t != null);
             
             foreach (string item in lines4)
@@ -283,9 +284,112 @@ namespace DataPreprocessingPruchaseList
             }
 
             //File.WriteAllLines("C:/Users/Admin/Desktop/WebPractice/MachineLearning/DataPreprocessing1/DataPreprocessingPruchaseList/Encoded.csv", EncodedList);
+
+            //Normalization
+            IDataView dataList = context.Data.LoadFromTextFile<CountryData2>("C:/Users/Admin/Desktop/WebPractice/MachineLearning/DataPreprocessing1/DataPreprocessingPruchaseList/Encoded.csv", hasHeader: true, separatorChar: ',');
+            var columnPair = new[]
+            {
+                new InputOutputColumnPair("Age"),
+                new InputOutputColumnPair("Salary"),
+                new InputOutputColumnPair("purchasedList"),
+                new InputOutputColumnPair("Country_France"),
+                new InputOutputColumnPair("Country_Spain"),
+                new InputOutputColumnPair("Country_Germany")
+            };
+
+            //var normalize = context.Transforms.NormalizeMinMax(columnPair, fixZero: false);
+
+            var normalize = context.Transforms.NormalizeMeanVariance(columnPair, fixZero: false);
+
+            //transform.
+
+            var normalizeFixZero = context.Transforms.NormalizeMeanVariance(columnPair, fixZero: true);
+            var normalizeTransform = normalize.Fit(dataList);
+            var transformedData = normalizeTransform.Transform(dataList);
+
+
+            
+            var normalizeFixZeroTransform = normalizeFixZero.Fit(dataList);
+            var fixZeroData = normalizeFixZeroTransform.Transform(dataList);
+            var Age = transformedData.GetColumn<float>("Age");
+            var Salary = transformedData.GetColumn<float>("Salary");
+            var PurchasedList = transformedData.GetColumn<float>("purchasedList");
+            var Country_France = transformedData.GetColumn<float>("Country_France");
+            var Country_Spain = transformedData.GetColumn<float>("Country_Spain");
+            var Country_Germany = transformedData.GetColumn<float>("Country_Germany");
+
+            Console.WriteLine("Printing Normalized Age");
+            foreach(var item in Age)
+            {
+                Console.WriteLine(item);
+            }
+            List<CountryData2> ListOfAllColumns = new List<CountryData2>();
+
+
+            var preview = transformedData.Preview();
+            foreach (var col in preview.Schema)
+            {
+                //Console.WriteLine(col.Index); 
+                 if (((col.Index % 2 ) == 0 ))
+                {
+                    Console.Write(col.Name + "\t");
+                    
+                }
+            }
+            Console.WriteLine();
+            for (int j = 0; j < preview.RowView.Length; j++)
+            {
+                for (int i = 1; i < 12; i++)
+                {
+                    if (i % 2 != 0)
+                    {
+                        Console.Write(preview.RowView[j].Values[i].Value + "\t");
+                    }
+                }
+                Console.WriteLine();
+            }
+            //Console.WriteLine("Age\tSalary\tPurchasedList\tCountry_France\tCountry_Spain\tCountry_Germany");
+            for (int j = 0; j < preview.RowView.Length; j++)
+            {
+                ListOfAllColumns.Add(new CountryData2()
+                {
+                    Age = ((float)preview.RowView[j].Values[1].Value),
+                    Salary = ((float)preview.RowView[j].Values[3].Value),
+                    purchasedList = ((float)preview.RowView[j].Values[5].Value),
+                    Country_France = ((float)preview.RowView[j].Values[7].Value),
+                    Country_Spain = ((float)preview.RowView[j].Values[9].Value),
+                    Country_Germany = ((float)preview.RowView[j].Values[11].Value),
+                });
+            }
+            foreach (var item in ListOfAllColumns)
+            {
+                Console.WriteLine(item.Age + " " + item.Salary + "  " + item.purchasedList + "  " + item.Country_France + "  " + item.Country_Spain + "  " + item.Country_Germany);
+            }
+
+            var dataview = context.Data.LoadFromEnumerable(ListOfAllColumns);
+            var split1 = context.Data.TrainTestSplit(dataview, testFraction: 0.2);
+            var trainSet = context.Data.CreateEnumerable<CountryData2>(split1.TrainSet, reuseRowObject: false);
+
+            var testSet = context.Data.CreateEnumerable<CountryData2>(split1.TestSet, reuseRowObject: false);
+
+            PrintPreviewRows(trainSet, testSet);
+
+
         }
 
-     
+        private static void PrintPreviewRows(IEnumerable<CountryData2> trainSet,
+            IEnumerable<CountryData2> testSet)
+
+        {
+
+            Console.WriteLine($"The data in the Train split.\n");
+            foreach (var row in trainSet)
+                Console.WriteLine($"{row.Age}, {row.Salary},{row.purchasedList},{row.Country_France},{row.Country_Spain},{row.Country_Germany}");
+
+            Console.WriteLine($"\nThe data in the Test split.\n");
+            foreach (var row in testSet)
+                Console.WriteLine($"{row.Age}, {row.Salary},{row.purchasedList},{row.Country_France},{row.Country_Spain},{row.Country_Germany}");
+        }
 
         private static void PrintDataColumn(IDataView transformedData,
             string columnName)

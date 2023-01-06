@@ -91,7 +91,7 @@ namespace DataPreProcessingOne
                             Console.WriteLine(col);
                         }
                     }*/
-                    for(int i=0;i< preview.RowView.Length; i++)
+                    for(int i=1;i< preview.RowView.Length; i++)
                     {
                         if (row.Values[i].Equals(Convert.ToSingle(0)))
                         {
